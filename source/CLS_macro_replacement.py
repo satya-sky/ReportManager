@@ -188,7 +188,8 @@ def main():
                image_file = io.BytesIO(r.data)
                img = Image(image_file)
                ws.add_image(img, cell_coord)
-               ws.cell.aligning = WD_ALIGN_PARAGRAPH.CENTER
+               # ws.cell.aligning = WD_ALIGN_PARAGRAPH.CENTER
+               ws.cell.alignment = WD_ALIGN_PARAGRAPH.CENTER       
                ws.cell(row = row, column = 14).value = None
 
        # updating row height and adding borders to Totals
