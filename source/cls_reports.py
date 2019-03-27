@@ -30,3 +30,4 @@ if __name__ == "__main__":
     report_type = filename.split('_')[1]
     file_id = filename.split('_')[-1].replace('.xls','')
     tmp_files = []
+    
