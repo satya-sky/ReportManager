@@ -18,3 +18,15 @@ from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 TIMESTAMP = t.strftime("%Y%m%d_%H%M%S")
+
+
+if __name__ == "__main__":
+    # file_path = sys.argv[1]
+    file_path = "C:\\report_manager\\001files\\CLS_OnDemandExport_sneelakantan@skyitgroup_01-18-2019_273.xls"
+    split_file_path = file_path.split('\\')
+
+    filename = split_file_path[-1]
+    client_id = filename.split('_')[0]
+    report_type = filename.split('_')[1]
+    file_id = filename.split('_')[-1].replace('.xls','')
+    tmp_files = []
