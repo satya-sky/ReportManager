@@ -34,7 +34,6 @@ TIMESTAMP = t.strftime("%Y%m%d_%H%M%S")
 
 
 def generate_cls_report(file_path, filename, client_id, report_type, file_id, sel_filename):
-# def generate_cls_report():
 
     # pdb.set_trace()
     icon_path = ICON_DIR + client_id + "_Icon.png"
@@ -53,6 +52,7 @@ def generate_cls_report(file_path, filename, client_id, report_type, file_id, se
                 s = list(filter(None, s))
                 s_len = len(s)
                 df_sel = pd.DataFrame({'selections': s})
+                df_sel = pd.DataFrame(df_sel.selections.str.split(':',1).tolist(), columns = ['labels','selections'])
 
        # file = filename[:-4] + "_" + TIMESTAMP +".xlsx"
        output_file = client_id + '_Output_' + TIMESTAMP + '_' + file_id +'.xlsx'
@@ -358,6 +358,12 @@ def generate_cls_report(file_path, filename, client_id, report_type, file_id, se
     se_cell = ws.cell(5,1)
     se_cell.value = 'Selections:'
     se_cell.font = se_font
+
+    # formatting Selections labels
+    se_labels_font = Font(bold=True, size = 11)
+    for cell in range(5, 5+s_len):
+        cell = ws.cell(cell, 2)
+        cell.font = se_labels_font
 
     # inserting Client icon
     cell_coord = ws.cell(row=1, column=2).coordinate

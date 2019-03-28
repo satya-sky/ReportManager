@@ -1,0 +1,6 @@
+DEBUG:root:Python file called20190327_124312
+DEBUG:root:Python file called20190327_124407
+DEBUG:root:Python file called20190327_124626
+DEBUG:root:Python file called20190327_124828
+DEBUG:root:Python file called20190327_125522
+DEBUG:root:Python file called20190327_125549

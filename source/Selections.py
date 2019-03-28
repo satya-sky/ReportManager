@@ -17,6 +17,9 @@ import time as t
 import xlsxwriter
 # import System.Linq
 
+ICON_DIR = "C:\\report_manager\\icons\\"
+ROOT_DIR = "C:\\report_manager\\"
+FILE_DIR = "C:\\report_manager\\001files\\"
 TIMESTAMP = t.strftime("%Y%m%d_%H%M%S")
 
 def scale(image, max_size, method=Image.ANTIALIAS):
@@ -33,8 +36,9 @@ def scale(image, max_size, method=Image.ANTIALIAS):
 
 def main():
     # file_path = sys.argv[1]
-    file_path = "C:\\Users\\SBellala\\Desktop\\macro_replacement\\Files\\OnDemandTest\\CLS_Selections_sneelakantan@skyitgroup_01-18-2019_274.xls"
-    icon_path = "C:\\Users\\SBellala\\Desktop\\macro_replacement\\icons\\CLS_Icon.png"
+    # file_path = "C:\\Users\\SBellala\\Desktop\\macro_replacement\\Files\\OnDemandTest\\CLS_Selections_sneelakantan@skyitgroup_01-18-2019_274.xls"
+    file_path = FILE_DIR + "Selections\\" + "CLS_Selections_sneelakantan@skyitgroup_01-18-2019_274.xls"
+    icon_path = ICON_DIR + "CLS_Icon.png"
     # icon_path = "C:\\Users\\SBellala\\Desktop\\macro_replacement\\icons\\" + client_id + "_Icon.png"
 
     split_file_path = file_path.split('\\')
@@ -56,6 +60,8 @@ def main():
        s = list(filter(None, s))
        s_len = len(s)
        df = pd.DataFrame({'selections': s})
+       # split selections to labels and selections
+       df = pd.DataFrame(df.selections.str.split(':',1).tolist(), columns = ['labels','selections'])
 
        file = filename[:-4] + "_" + TIMESTAMP +".xlsx"
        writer = pd.ExcelWriter(file,engine='xlsxwriter')
@@ -112,28 +118,34 @@ def main():
        se_cell.value = 'Selections:'
        se_cell.font = se_font
 
+       # formatting Selections labels
+       se_labels_font = Font(bold=True, size = 11)
+       for cell in range(5, 5+s_len):
+           cell = ws.cell(cell, 2)
+           cell.font = se_labels_font
+
        # inserting Client icon
        cell_coord = ws.cell(row=1, column=2).coordinate
        img = openpyxl.drawing.image.Image(icon_path)
        ws.add_image(img, cell_coord)
 
        # testing padding
-       pdb.set_trace()
-       cell_coord = ws.cell(row=13, column=2).coordinate
-       # img = openpyxl.drawing.image.Image(icon_path)
-       img = Image.open(icon_path)
-       old_size = img.size   # +size = 180 * 63
-       # delta_w = 20
-       # delta_h = 10
-       # padding = (10, 5, 10, 5 )
-       # new_img = ImageOps.expand(img, padding)
-       # new_img.show()
-       max_size = (200, 73)
-
-       final_image = scale(img, max_size, method=Image.ANTIALIAS)
-       # im = openpyxl.drawing.image.Image(final_image)
-       # ws.add_image(final_image, cell_coord)
-       final_image.show()
+       # pdb.set_trace()
+       # cell_coord = ws.cell(row=13, column=2).coordinate
+       # # img = openpyxl.drawing.image.Image(icon_path)
+       # img = Image.open(icon_path)
+       # old_size = img.size   # +size = 180 * 63
+       # # delta_w = 20
+       # # delta_h = 10
+       # # padding = (10, 5, 10, 5 )
+       # # new_img = ImageOps.expand(img, padding)
+       # # new_img.show()
+       # max_size = (200, 73)
+       #
+       # final_image = scale(img, max_size, method=Image.ANTIALIAS)
+       # # im = openpyxl.drawing.image.Image(final_image)
+       # # ws.add_image(final_image, cell_coord)
+       # final_image.show()
 
        wb.save(temp_file)
 
