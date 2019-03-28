@@ -4,6 +4,8 @@ from openpyxl.styles.borders import Border, Side
 # from openpyxl.utils import get_column_letter
 from openpyxl.drawing.image import Image
 # import PIL import Image, ImageOps
+import cv2
+import numpy as np
 import io
 import urllib3
 import image
@@ -18,10 +20,12 @@ from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 TIMESTAMP = t.strftime("%Y%m%d_%H%M%S")
+FILE_DIR = "C:\\report_manager\\001files\\"
 
 def main():
     # file_path = sys.argv[1]
-    file_path = "C:\\Users\\SBellala\\Desktop\\macro_replacement\\Files\\OnDemandTest\\CLS_OnDemandExport_sneelakantan@skyitgroup_01-18-2019_273.xls"
+    # file_path = "C:\\Users\\SBellala\\Desktop\\macro_replacement\\Files\\OnDemandTest\\CLS_OnDemandExport_sneelakantan@skyitgroup_01-18-2019_273.xls"
+    file_path = "C:\\report_manager\\001files\\CLS_OnDemandExport_sneelakantan@skyitgroup_01-18-2019_275.xls"
     split_file_path = file_path.split('\\')
 
     filename = split_file_path[-1]
@@ -39,8 +43,8 @@ def main():
        rows = df.shape[0] + 1
        columns = df.shape[1] + 1
        workbook = writer.book
-       workbook.filename = filename[:-4] + "_" + TIMESTAMP + "_" + file_id + ".xlsx"
-       # workbook.filename = 'test.xlsx'
+       # workbook.filename = filename[:-4] + "_" + TIMESTAMP + "_" + file_id + ".xlsx"
+       workbook.filename = 'test.xlsx'
        temp_file = workbook.filename
        # temp_file = 'test.xlsx' #only for testing
        writer.save()
@@ -176,7 +180,25 @@ def main():
            cell.border = ver_thick_border
 
 
+       # # inserting Image loop
+       # for row in range(2, rows):
+       #     cell = ws.cell(row = row, column = 14).value
+       #     cell_coord = ws.cell(row=row, column=14).coordinate
+       #     if cell == None:
+       #         row = row + 1
+       #     else:
+       #         http = urllib3.PoolManager()
+       #         r = http.request('GET', cell)
+       #         image_file = io.BytesIO(r.data)
+       #         img = Image(image_file)
+       #         ws.add_image(img, cell_coord)
+       #         # ws.cell.aligning = WD_ALIGN_PARAGRAPH.CENTER
+       #         # ws.cell.alignment = WD_ALIGN_PARAGRAPH.CENTER
+       #         ws.cell(row = row, column = 14).value = None
+
        # inserting Image loop
+       BLUE = [255,0,0]
+       pdb.set_trace()
        for row in range(2, rows):
            cell = ws.cell(row = row, column = 14).value
            cell_coord = ws.cell(row=row, column=14).coordinate
@@ -187,10 +209,13 @@ def main():
                r = http.request('GET', cell)
                image_file = io.BytesIO(r.data)
                img = Image(image_file)
-               ws.add_image(img, cell_coord)
+               img1 = cv2.imread(img)
+               constant = cv2.copyMakeBorder(img1,0,0,5,0,cv2.BORDER_CONSTANT,value=BLUE)
+               ws.add_image(constant, cell_coord)
                # ws.cell.aligning = WD_ALIGN_PARAGRAPH.CENTER
-               ws.cell.alignment = WD_ALIGN_PARAGRAPH.CENTER       
+               # ws.cell.alignment = WD_ALIGN_PARAGRAPH.CENTER
                ws.cell(row = row, column = 14).value = None
+
 
        # updating row height and adding borders to Totals
        # Cells(j, 14).Interior.Color = RGB(255, 255, 255)

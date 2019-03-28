@@ -5,6 +5,9 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 # from openpyxl.utils import get_column_letter
 # from openpyxl.drawing.Image import Image
 from PIL import Image, ImageOps
+import cv2 #for image padding
+import numpy as np  #for image padding
+from matplotlib import pyplot as plt #for image padding
 import io
 import urllib3
 import image
@@ -131,6 +134,12 @@ def main():
 
        # testing padding
        # pdb.set_trace()
+       BLUE = [255,0,0]
+       img1 = cv2.imread(icon_path)
+       constant = cv2.copyMakeBorder(img1,0,0,5,0,cv2.BORDER_CONSTANT,value=BLUE)
+       plt.subplot(236),plt.imshow(constant,'gray'),plt.title('CONSTANT')
+       plt.show()
+       pdb.set_trace()
        # cell_coord = ws.cell(row=13, column=2).coordinate
        # # img = openpyxl.drawing.image.Image(icon_path)
        # img = Image.open(icon_path)
