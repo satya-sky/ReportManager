@@ -1,5 +1,5 @@
 
-# import EmailModule as em
+import EmailModule as em
 import image
 import io
 import logging
@@ -9,6 +9,7 @@ import os
 import pandas as pd
 import pdb
 import urllib3
+import shutil
 import sys
 import time as t
 # import win32com.client
@@ -27,13 +28,15 @@ from openpyxl.drawing.image import Image
 FILE_DIR = "C:\\report_manager\\001files\\"    #for local
 # ROOT_DIR = 'D:\\cia_replacement_test\\'
 ROOT_DIR = "C:\\report_manager\\"
+# OUTPUT_DIR = "D:\\cia_replacement_test\\output"
+OUTPUT_DIR = "C:\\report_manager\\output\\"
 # ICON_DIR = "D:\\cia_replacement_test\\icons\\"
 ICON_DIR = "C:\\report_manager\\icons\\"
 TIMESTAMP = t.strftime("%Y%m%d_%H%M%S")
 # TMP_FILES = []
 
 
-def generate_cls_report(file_path, filename, client_id, report_type, file_id, sel_filename):
+def generate_cls_report(file_path, filename, client_id, report_type, file_id, sel_filename, email_id):
 
     # pdb.set_trace()
     icon_path = ICON_DIR + client_id + "_Icon.png"
@@ -55,7 +58,8 @@ def generate_cls_report(file_path, filename, client_id, report_type, file_id, se
                 df_sel = pd.DataFrame(df_sel.selections.str.split(':',1).tolist(), columns = ['labels','selections'])
 
        # file = filename[:-4] + "_" + TIMESTAMP +".xlsx"
-       output_file = client_id + '_Output_' + TIMESTAMP + '_' + file_id +'.xlsx'
+       # output_file = client_id + '_Output_' + TIMESTAMP + '_' + file_id +'.xlsx'
+       output_file = client_id + '_Output_' + file_id +'.xlsx'
 
        writer = pd.ExcelWriter(output_file,engine='xlsxwriter')
        # Infosheet = writer.add_worksheet()
@@ -370,24 +374,43 @@ def generate_cls_report(file_path, filename, client_id, report_type, file_id, se
     img = openpyxl.drawing.image.Image(icon_path)
     ws.add_image(img, cell_coord)
 
-
     wb.save(temp_file)
+    # pdb.set_trace()
+
+    output_path = OUTPUT_DIR + client_id + "\\" + file_id
+    os.mkdir(output_path)
+    # pdb.set_trace()
+
+    output_file_path = ROOT_DIR + "source\\" + temp_file
+    final_output = output_path + "\\CLSStyleSelling.xlsx"
+
+    shutil.copy(output_file_path, output_path + "\\CLSStyleSelling.xlsx" )
+    # pdb.set_trace()
+    # os.remove(output_file_path)
+    # os.remove(sel_file_path)
+    # os.remove(file_path)
+
+    email_reports(client_id,final_output,report_type, email_id)
+
+    # os.remove(output_path) # should be added after sending out email
 
 
-def email_reports(client_id,filename,report_type):
-    #pdb.set_trace()
+
+def email_reports(client_id,filename,report_type,email_id):
+    # pdb.set_trace()
     from_email = 'support'
     subject = client_id + ' ' + 'StyleSelling' + ' ' + 'Report'
-    attachment = client_id + 'StyleSelling.xlsx'
+    # attachment = client_id + 'StyleSelling.xlsx'
+    attachment = filename
     message = 'Please' + ' ' + 'See' + ' ' + 'Attached.'
     #file_name = temp_file
-    #pdb.set_trace()
+    pdb.set_trace()
     if report_type == 'OnDemandExport':
-        recipients = filename.split("_")[2] + ".com"
+        recipients = email_id
         logging.debug("Sending email")
         em.send_email_from(from_email,[recipients],subject, message,attachment)
     if report_type == 'ScheduledExport':
-        recipients = ["sneelakantan@skyitgroup.com"]
+        recipients = ["sbellala@skyitgroup.com"]
         logging.debug("Sending email")
         em.send_email_from(from_email,recipients,subject, message,attachment)
 
@@ -396,10 +419,11 @@ if __name__ == "__main__":
 
     # pdb.set_trace()
     # file_path = sys.argv[1]
-    file_path = "C:\\report_manager\\001files\\CLS_OnDemandExport_sneelakantan@skyitgroup_01-18-2019_275.xls"
+    file_path = "C:\\report_manager\\001files\\CLS_OnDemandExport_sbellala@skyitgroup_01-18-2019_275.xls"
     split_file_path = file_path.split('\\')
 
     filename = split_file_path[-1]
+    email_id = filename.split("_")[2] + ".com"
     client_id = filename.split('_')[0]
     report_type = filename.split('_')[1]
     file_id = filename.split('_')[-1].replace('.xls','')
@@ -413,5 +437,5 @@ if __name__ == "__main__":
 
 
 
-    generate_cls_report(file_path, filename, client_id, report_type, file_id, sel_filename)
+    generate_cls_report(file_path, filename, client_id, report_type, file_id, sel_filename, email_id)
     # generate_cls_report()
