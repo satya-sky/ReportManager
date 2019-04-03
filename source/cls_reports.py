@@ -1,5 +1,4 @@
 
-import EmailModule as em
 import image
 import io
 import logging
@@ -11,7 +10,7 @@ import pdb
 import urllib3
 import shutil
 import sys
-import time as t
+import time
 # import win32com.client
 import xlsxwriter
 # from docx import Document
@@ -22,6 +21,8 @@ from openpyxl.styles.borders import Border, Side
 # from openpyxl.utils import get_column_letter
 from openpyxl.drawing.image import Image
 # from PIL import Image, ImageOps
+from sky_utils import file_utils as futil
+from sky_utils import EmailModule as em
 
 
 # FILE_DIR = ('\\\\192.168.100.25\\Qlik\\ReportManager_Test\\')
@@ -32,7 +33,7 @@ ROOT_DIR = "C:\\report_manager\\"
 OUTPUT_DIR = "C:\\report_manager\\output\\"
 # ICON_DIR = "D:\\cia_replacement_test\\icons\\"
 ICON_DIR = "C:\\report_manager\\icons\\"
-TIMESTAMP = t.strftime("%Y%m%d_%H%M%S")
+TIMESTAMP = time.strftime("%Y%m%d_%H%M%S")
 # TMP_FILES = []
 
 
@@ -45,41 +46,27 @@ def generate_cls_report(file_path, filename, client_id, report_type, file_id, se
 
        for filename in os.listdir(FILE_DIR + "Selections\\"):
            sel_file_path = FILE_DIR + "Selections\\" + filename
-           if filename == sel_filename:
-                df_sel = pd.read_excel (sel_file_path, header=None)
-                selections = []
-                s = []
-                selections = df_sel.values.tolist()
-                selections = [x for x in selections[0] if str(x) != 'nan']
-                s = selections[0].split('\n')
-                s = list(filter(None, s))
-                s_len = len(s)
-                df_sel = pd.DataFrame({'selections': s})
-                df_sel = pd.DataFrame(df_sel.selections.str.split(':',1).tolist(), columns = ['labels','selections'])
+           # if filename == sel_filename:
+           df_sel, s_len = futil.generate_selections_dataframe(sel_file_path)
 
-       # file = filename[:-4] + "_" + TIMESTAMP +".xlsx"
-       # output_file = client_id + '_Output_' + TIMESTAMP + '_' + file_id +'.xlsx'
        output_file = client_id + '_Output_' + file_id +'.xlsx'
 
        writer = pd.ExcelWriter(output_file,engine='xlsxwriter')
-       # Infosheet = writer.add_worksheet()
        df_sel.to_excel(writer, sheet_name='Info', startrow=4, startcol=1, header=False, index=False)
        df.to_excel(writer, sheet_name='StyleSelling', index=False)
        rows = df.shape[0] + 1
        columns = df.shape[1] + 1
        workbook = writer.book
-       # workbook.filename = filename[:-4] + "_" + TIMESTAMP + "_" + file_id + ".xlsx"
-       # workbook.filename = 'test.xlsx'
-       workbook.filename = output_file
-       temp_file = workbook.filename
-       # temp_file = 'test.xlsx' #only for testing
+       output_file = workbook.filename
        writer.save()
-       # writer.close(test.xlsx)
        # pdb.set_trace()
 
-       # wb = openpyxl.load_workbook('test.xlsx')
-       wb = openpyxl.load_workbook(temp_file)
-       # active_ws=wb.get_sheet_by_name("Data")
+       wb = openpyxl.load_workbook(output_file)
+
+       # formatting Info Sheet
+       wb = futil.format_info(wb, s_len, client_id)
+
+       # formatting Data Sheet
        wb.active = 2
        ws = wb["StyleSelling"]
        # ws = wb.active
@@ -317,71 +304,16 @@ def generate_cls_report(file_path, filename, client_id, report_type, file_id, se
            # cell.number_format = '"$"#,##0_-'
            cell.number_format = '"$"#,##0_);("$"#,##0)'
 
-    """ Adding Selections to report """
-
-    wb.active = 1
-    ws = wb["Info"]
-    # ws = wb.active
-    # updating dimensions for rows and columns
-    ws.row_dimensions[1].height = 52
-    ws.row_dimensions[2].height = 30
-    ws.column_dimensions['A'].width = 18
-    ws.column_dimensions['B'].width = 18
-    ws.column_dimensions['C'].width = 18
-    ws.column_dimensions['D'].width = 18
-
-    no_border = Border(left=Side(style=None),
-                       right=Side(style=None),
-                       top=Side(style=None),
-                       bottom=Side(style=None))
-
-
-    # Merging 1st and 2nd row
-    ws.merge_cells(start_row = 1, start_column = 1, end_row = 1, end_column = 4)
-    ws.merge_cells(start_row = 2, start_column = 1, end_row = 2, end_column = 4)
-
-    # formatting style selling report cell
-    ss_font = Font(size = 20) #ss --> style selling
-    ss_cell = ws.cell(2,1)
-    ss_cell.value = 'Style Selling Report'
-    ss_cell.font = ss_font
-    ss_cell.alignment = Alignment(horizontal='center', vertical='center')
-
-    # formatting Report Generated: cell
-    rg_font = Font(bold=True, size = 11) #rg --> Report Generated
-    rg_cell = ws.cell(3,1)
-    rg_cell.value = 'Report Generated:'
-    rg_cell.font = rg_font
-
-    # adding Timestamp   20190314_133248
-    date_time = TIMESTAMP[4:6] + '/' + TIMESTAMP[6:8] + '/' + TIMESTAMP[0:4] + ' ' + TIMESTAMP[9:11] + ':' + TIMESTAMP[11:13]
-    ws.cell(3,2).value = date_time
-
-    # formatting Selections: cell
-    se_font = Font(bold=True, size = 11) #se --> Selections:
-    se_cell = ws.cell(5,1)
-    se_cell.value = 'Selections:'
-    se_cell.font = se_font
-
-    # formatting Selections labels
-    se_labels_font = Font(bold=True, size = 11)
-    for cell in range(5, 5+s_len):
-        cell = ws.cell(cell, 2)
-        cell.font = se_labels_font
-
-    # inserting Client icon
-    cell_coord = ws.cell(row=1, column=2).coordinate
-    img = openpyxl.drawing.image.Image(icon_path)
-    ws.add_image(img, cell_coord)
-
-    wb.save(temp_file)
+    # pdb.set_trace()
+    wb.save(output_file)
     # pdb.set_trace()
 
     output_path = OUTPUT_DIR + client_id + "\\" + file_id
     os.mkdir(output_path)
     # pdb.set_trace()
 
-    output_file_path = ROOT_DIR + "source\\" + temp_file
+    # output_file_path = ROOT_DIR + "source\\" + temp_file
+    output_file_path = ROOT_DIR + "source\\" + output_file
     final_output = output_path + "\\CLSStyleSelling.xlsx"
 
     shutil.copy(output_file_path, output_path + "\\CLSStyleSelling.xlsx" )
@@ -390,7 +322,7 @@ def generate_cls_report(file_path, filename, client_id, report_type, file_id, se
     # os.remove(sel_file_path)
     # os.remove(file_path)
 
-    email_reports(client_id,final_output,report_type, email_id)
+    # email_reports(client_id,final_output,report_type, email_id)
 
     # os.remove(output_path) # should be added after sending out email
 
@@ -404,7 +336,7 @@ def email_reports(client_id,filename,report_type,email_id):
     attachment = filename
     message = 'Please' + ' ' + 'See' + ' ' + 'Attached.'
     #file_name = temp_file
-    pdb.set_trace()
+    # pdb.set_trace()
     if report_type == 'OnDemandExport':
         recipients = email_id
         logging.debug("Sending email")
@@ -432,7 +364,7 @@ if __name__ == "__main__":
 
     # logging.basicConfig(filename= ROOT_DIR + 'log\\pythonlog.txt',level=logging.DEBUG)
     logging.basicConfig(filename= ROOT_DIR + 'log\\' + client_id + 'ReportManager_log.txt',level=logging.DEBUG)
-    logging.debug('Python file called' + t.strftime("%Y%m%d_%H%M%S"))
+    logging.debug('Python file called' + time.strftime("%Y%m%d_%H%M%S"))
     # pdb.set_trace()
 
 
